@@ -21,3 +21,7 @@ bin/contracts/*
 !bin/contracts/MdexFactory.abi
 !bin/contracts/MdexPair.abi
 !bin/contracts/BSCPool.abi
+contracts/artifacts/*
+contracts/Cake/artifacts/*
+contracts/Interface/artifacts/*
+contracts/utils/artifacts/*

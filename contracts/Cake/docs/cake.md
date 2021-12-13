@@ -121,3 +121,4 @@ BankConfig.sol --- 用户资金管理配置
 CakeStrategyAddTwoSidesOptimal.sol ---  交易策略
 CakeStrategyWithdrawMinimizeTrading.sol --- 交易策略
 CakeGoblin.sol ---  交易策略主要执行合约 需要配置userprofile bank strategy 
+CakeInvestment.sol --- 复投策略，针对cakeVault pool 进行操作

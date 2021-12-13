@@ -23,6 +23,11 @@
 						"type": "uint256"
 					},
 					{
+						"internalType": "contract ICakeinvestment",
+						"name": "_reinvestment",
+						"type": "address"
+					},
+					{
 						"internalType": "contract IMasterChef",
 						"name": "_bscPool",
 						"type": "address"
@@ -39,7 +44,7 @@
 					},
 					{
 						"internalType": "address",
-						"name": "_mdx",
+						"name": "_cake",
 						"type": "address"
 					},
 					{
@@ -221,6 +226,19 @@
 			},
 			{
 				"inputs": [],
+				"name": "cake",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
 				"name": "farm",
 				"outputs": [
 					{
@@ -343,12 +361,12 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "totalMdx",
+						"name": "totalCake",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "accMdxPerLp",
+						"name": "accCakePerLp",
 						"type": "uint256"
 					},
 					{
@@ -436,19 +454,6 @@
 				"outputs": [
 					{
 						"internalType": "contract IPancakePair",
-						"name": "",
-						"type": "address"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "mdx",
-				"outputs": [
-					{
-						"internalType": "address",
 						"name": "",
 						"type": "address"
 					}
@@ -753,12 +758,12 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "earnedMdxStored",
+						"name": "earnedCakeStored",
 						"type": "uint256"
 					},
 					{
 						"internalType": "uint256",
-						"name": "accMdxPerLpStored",
+						"name": "accCakePerLpStored",
 						"type": "uint256"
 					},
 					{
@@ -830,7 +835,7 @@
 			"kind": "dev",
 			"methods": {
 				"getAllRewards(address)": {
-					"details": "Send both MDX and DEMA rewards to user."
+					"details": "Send both CAKE and DEMA rewards to user."
 				},
 				"getEqAmount(uint256,uint256,uint256)": {
 					"details": "Return equivalent output given the input amount and the status of Uniswap reserves.",
@@ -909,14 +914,14 @@
 					}
 				},
 				"totalRewards()": {
-					"details": "total Mdx rewards can be withdrawn."
+					"details": "total CAKE rewards can be withdrawn."
 				},
 				"transferOwnership(address)": {
 					"details": "Transfers ownership of the contract to a new account (`newOwner`). Can only be called by the current owner."
 				},
 				"userEarnedAmount(address)": {
 					"returns": {
-						"_0": "Earned MDX and DEMA amount."
+						"_0": "Earned CAKE and DEMA amount."
 					}
 				},
 				"work(uint256,address,address[2],uint256[2],uint256[2],bytes)": {
@@ -963,17 +968,17 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
+			"enabled": true,
 			"runs": 200
 		},
 		"remappings": []
 	},
 	"sources": {
 		"contracts/CakeGoblin.sol": {
-			"keccak256": "0xc8f135ffebd854246861308c9df3f91339ead111aa90ec78f2fc148d8f53a061",
+			"keccak256": "0x30d140b76d4206b2b311a81c1d5675b2b2bdfffa3e645117099b2dcb3a541f85",
 			"urls": [
-				"bzz-raw://58bf26f1c967aebe66b48e752110292c57f7bedc9740810495112d052eea5a05",
-				"dweb:/ipfs/QmapBUKM4JgpmtDFr3xQwmp95QnMu5LGfzc9dD5jjAAjic"
+				"bzz-raw://22ad827de9c11a90abf46e8deb9e8529cc8e1a8cb794be24a8608dc5ad37fb16",
+				"dweb:/ipfs/QmYELxMRqESUZk88xTkFBE1hvP99FYSj3wBydaLFNzWh6d"
 			]
 		},
 		"contracts/Interface/IFarm.sol": {
@@ -995,6 +1000,13 @@
 			"urls": [
 				"bzz-raw://3ee2a7fdfe4cf5e9312fc8b350b231ac68dd05f1522ac4c7238da3c48248472b",
 				"dweb:/ipfs/QmQKd9criEGMALhBBHpXNCusC5rKprKUXkrzXrRn7oo4Ue"
+			]
+		},
+		"contracts/Interface/cakeInterface/ICakeinvestment.sol": {
+			"keccak256": "0x96f5fbe93f7e4240babcdf7a407cde480f69df26dce1f55ee68e46dc285f3b21",
+			"urls": [
+				"bzz-raw://a201577d1ca8d9439908460bf78a5dee1b9ff3ec0b719c9e4d1784a6d9113169",
+				"dweb:/ipfs/QmSGcLiEcNtYVNidVy2sGo9uv7hRc3Y5etw7b6EoJVhr3S"
 			]
 		},
 		"contracts/Interface/cakeInterface/IMasterChef.sol": {

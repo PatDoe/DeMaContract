@@ -27,8 +27,8 @@ contract CakeStrategyWithdrawMinimizeTrading is Ownable, ReentrancyGuard, IStrat
     IPancakeRouter02 public router;
     address public wBNB;
 
-    /// @dev Create a new withdraw minimize trading strategy instance for mdx.
-    /// @param _router The mdx router smart contract.
+    /// @dev Create a new withdraw minimize trading strategy instance for cake.
+    /// @param _router The cake router smart contract.
     constructor(IPancakeRouter02 _router) public {
         factory = IPancakeFactory(_router.factory());
         router = _router;
@@ -356,9 +356,9 @@ contract CakeStrategyWithdrawMinimizeTrading is Ownable, ReentrancyGuard, IStrat
     //     ISwapMining _swapMining = ISwapMining(router.swapMining());
     //     _swapMining.takerWithdraw();
 
-    //     // Send MDX back to owner.
-    //     address mdx = _swapMining.mdx();
-    //     mdx.safeTransfer(msg.sender, mdx.myBalance());
+    //     // Send Cake back to owner.
+    //     address cake = _swapMining.cake();
+    //     cake.safeTransfer(msg.sender, cake.myBalance());
     // }
 
     receive() external payable {}

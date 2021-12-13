@@ -223,7 +223,7 @@ contract CakeStrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, IStrategy {
     //     ISwapMining _swapMining = ISwapMining(router.swapMining());
     //     _swapMining.takerWithdraw();
 
-    //     // Send MDX back to owner.
+    //     // Send Cake back to owner.
     //     address cake = _swapMining.cake();
     //     cake.safeTransfer(msg.sender, cake.myBalance());
     // }

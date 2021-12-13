@@ -14,7 +14,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.3.0/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.3.0/contracts/utils/ReentrancyGuard.sol";
 
 import "./Interface/IFarm.sol";
-// import "./Interface/IReinvestment.sol";
+import "./Interface/cakeInterface/ICakeinvestment.sol";
 import "./Interface/cakeInterface/IPancakeRouter02.sol";
 import "./Interface/cakeInterface/IPancakeFactory.sol";
 import "./Interface/cakeInterface/IPancakePair.sol";
@@ -42,7 +42,7 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
     /// @notice Immutable variables
     IFarm public farm;
     uint256 public poolId;
-    // IReinvestment reinvestment;
+    ICakeinvestment reinvestment;
 
     IMasterChef public bscPool;
     uint256 public bscPoolId;
@@ -57,15 +57,15 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
     /// @notice Mutable state variables
     struct GlobalInfo {
         uint256 totalLp;        // Total staked lp amount.
-        uint256 totalCake;       // Total Mdx amount that already staked to board room.
+        uint256 totalCake;       // Total CAKE amount that already staked to board room.
         uint256 accCakePerLp;    // Accumulate cake rewards amount per lp token.
         uint256 lastUpdateTime;
     }
 
     struct UserInfo {
         uint256 totalLp;            // Total Lp amount.
-        uint256 earnedMdxStored;    // Earned cake amount stored at the last time user info was updated.
-        uint256 accMdxPerLpStored;  // The accCakePerLp at the last time user info was updated.
+        uint256 earnedCakeStored;    // Earned cake amount stored at the last time user info was updated.
+        uint256 accCakePerLpStored;  // The accCakePerLp at the last time user info was updated.
         uint256 lastUpdateTime;
     }
 
@@ -82,7 +82,7 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
     struct TempParams {
         uint256 beforeLPAmount;
         uint256 afterLPAmount;
-        uint256 returnMdxAmount;
+        uint256 returnCakeAmount;
         uint256 deltaAmount;
     }
 
@@ -90,11 +90,11 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
         address _operator,              // Bank
         IFarm _farm,                    // Farm
         uint256 _poolId,                // Farm pool id
-        // IReinvestment _reinvestment,    // Mdx reinvestment
+        ICakeinvestment _reinvestment,    // CAKE reinvestment
         IMasterChef _bscPool,
         uint256 _bscPoolId,
         IPancakeRouter02 _router,
-        address _mdx,
+        address _cake,
         address _token0,
         address _token1,
         IStrategy _liqStrategy
@@ -103,12 +103,12 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
         wBNB = _router.WETH();
         farm = _farm;
         poolId  = _poolId;
-        // reinvestment = _reinvestment;
+        reinvestment = _reinvestment;
 
-        // MDX related params.
+        // CAKE related params.
         bscPool = _bscPool;
         bscPoolId  = _bscPoolId;
-        cake = _mdx;
+        cake = _cake;
         IPancakeFactory factory = IPancakeFactory(_router.factory());
 
         _token0 = _token0 == address(0) ? wBNB : _token0;
@@ -125,7 +125,7 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
 
         // 100% trust in the bsc pool
         lpToken.approve(address(bscPool), uint256(-1));
-        // cake.safeApprove(address(reinvestment), uint256(-1));
+        cake.safeApprove(address(reinvestment), uint256(-1));
     }
 
     /// @dev Require that the caller must be the operator (the bank).
@@ -300,19 +300,19 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
         }
     }
 
-    /// @dev total Mdx rewards can be withdrawn.
+    /// @dev total CAKE rewards can be withdrawn.
     function totalRewards() public view returns (uint256) {
-        uint256 poolPendingMdx= bscPool.pendingCake(bscPoolId, address(this));
+        uint256 poolPendingCAKE= bscPool.pendingCake(bscPoolId, address(this));
 
         // uint256 reservedRatio = reinvestment.reservedRatio();
         // If reserved some rewards
         // if (reservedRatio != 0) {
         //     // And then div the left share ratio.
-        //     poolPendingMdx = poolPendingMdx.sub(poolPendingMdx.mul(reservedRatio).div(10000));
+        //     poolPendingCAKE = poolPendingCAKE.sub(poolPendingCAKE.mul(reservedRatio).div(10000));
         // }
 
-        // return poolPendingMdx.add(reinvestment.userEarnedAmount(address(this)));
-        return poolPendingMdx;
+        // return poolPendingCAKE.add(reinvestment.userEarnedAmount(address(this)));
+        return poolPendingCAKE.add(reinvestment.userEarnedAmount(address(this)));
     }
 
     function rewardPerLp() public view  returns (uint256) {
@@ -325,27 +325,27 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
         }
     }
 
-    /// @return Earned MDX and DEMA amount.
+    /// @return Earned CAKE and DEMA amount.
     function userEarnedAmount(address account) public view override returns (uint256, uint256) {
         UserInfo storage user = userInfo[account];
 
-        return (user.totalLp.mul(rewardPerLp().sub(user.accMdxPerLpStored)).div(1e18).add(user.earnedMdxStored),
+        return (user.totalLp.mul(rewardPerLp().sub(user.accCakePerLpStored)).div(1e18).add(user.earnedCakeStored),
                 farm.stakeEarnedPerPool(poolId, account));
     }
 
     /* ==================================== Write ==================================== */
 
-    /// @dev Send both MDX and DEMA rewards to user.
+    /// @dev Send both CAKE and DEMA rewards to user.
     function getAllRewards(address account) public override {
         _updatePool(account);
         UserInfo storage user = userInfo[account];
 
-        // Send MDX
-        if (user.earnedMdxStored > 0) {
-            // reinvestment.withdraw(user.earnedMdxStored);    // TODO This may be not correct
-            cake.safeTransfer(account, user.earnedMdxStored);
-            globalInfo.totalCake = globalInfo.totalCake.sub(user.earnedMdxStored);
-            user.earnedMdxStored = 0;
+        // Send CAKE
+        if (user.earnedCakeStored > 0) {
+            reinvestment.withdraw(reinvestment.userEarnedAmount(account));    // TODO This may be not correct
+            cake.safeTransfer(account, user.earnedCakeStored);
+            globalInfo.totalCake = globalInfo.totalCake.sub(user.earnedCakeStored);
+            user.earnedCakeStored = 0;
         }
 
         // Send DEMA
@@ -404,26 +404,26 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
             }
         }
 
-        temp.returnMdxAmount = cake.myBalance();  // Now is cake balance before execute
+        temp.returnCakeAmount = cake.myBalance();  // Now is cake balance before execute
 
         // -------------------------- execute --------------------------
         // strategy will send back all token and LP.
         uint256[2] memory deltaN = IStrategy(strategy).execute{value: msg.value}(
             account, borrowTokens, borrowAmounts, debts, ext);
 
-        if (cake.myBalance() > temp.returnMdxAmount) {
+        if (cake.myBalance() > temp.returnCakeAmount) {
             // There are return cake, that means it's a withdraw
-            temp.returnMdxAmount = cake.myBalance() - temp.returnMdxAmount;
+            temp.returnCakeAmount = cake.myBalance() - temp.returnCakeAmount;
         } else {
-            // No return or Mdx amount decrease which means it's an add.
-            temp.returnMdxAmount = 0;
+            // No return or CAKE amount decrease which means it's an add.
+            temp.returnCakeAmount = 0;
         }
 
         // 3. Add LP tokens back to the bsc pool.
         _addPosition(id, account);
 
         // Send cake to reinvestment.
-        // reinvestment.deposit(cake.myBalance().sub(temp.returnMdxAmount));
+        reinvestment.deposit(cake.myBalance().sub(temp.returnCakeAmount));
 
         // Handle stake reward.
         temp.afterLPAmount = posLPAmount[id];
@@ -544,22 +544,22 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
         uint256 lpTokenAmount = lpToken.balanceOf(address(this));
         lpToken.transfer(address(liqStrategy), lpTokenAmount);
 
-        uint256 returnMdxAmount = cake.myBalance();  // Now is cake balance before execute
+        uint256 returnCakeAmount = cake.myBalance();  // Now is cake balance before execute
 
         // address token0, address token1, uint256 rate, uint256 whichWantBack
         liqStrategy.execute(address(this), borrowTokens, uint256[2]([uint256(0), uint256(0)]), debts, abi.encode(
             lpToken.token0(), lpToken.token1(), 10000, 2));
 
-        if (cake.myBalance() > returnMdxAmount) {
+        if (cake.myBalance() > returnCakeAmount) {
             // There are return cake, that means it's a withdraw
-            returnMdxAmount = cake.myBalance() - returnMdxAmount;
+            returnCakeAmount = cake.myBalance() - returnCakeAmount;
         } else {
-            // No return or Mdx amount decrease which means it's an add.
-            returnMdxAmount = 0;
+            // No return or CAKE amount decrease which means it's an add.
+            returnCakeAmount = 0;
         }
 
         // Send cake to reinvestment.
-        // reinvestment.deposit(cake.myBalance().sub(returnMdxAmount));
+        reinvestment.deposit(cake.myBalance().sub(returnCakeAmount));
 
         // 2. transfer borrowTokens and user want back to bank.
         uint256[2] memory tokensLiquidate;
@@ -699,9 +699,9 @@ contract CakeGoblin is Ownable, ReentrancyGuard, IGoblin {
 
         UserInfo storage user = userInfo[account];
         if (account != address(0) && user.lastUpdateTime != block.timestamp) {
-            user.earnedMdxStored = user.totalLp.mul(globalInfo.accCakePerLp.sub(user.accMdxPerLpStored)
-                ).div(1e18).add(user.earnedMdxStored);
-            user.accMdxPerLpStored = globalInfo.accCakePerLp;
+            user.earnedCakeStored = user.totalLp.mul(globalInfo.accCakePerLp.sub(user.accCakePerLpStored)
+                ).div(1e18).add(user.earnedCakeStored);
+            user.accCakePerLpStored = globalInfo.accCakePerLp;
             user.lastUpdateTime = block.timestamp;
         }
     }
